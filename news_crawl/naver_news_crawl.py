@@ -17,9 +17,11 @@ from tqdm import tqdm
 # 크롤링한 파일 생성 : 파일명 crawl_news.json
 # json 파일 내 title, text로 분리 
 
+# 추후 고려 사항 - 연도별로 구분?
+
 argparser = ArgumentParser("네이버 뉴스 크롤링")
 argparser.add_argument("--query", type=str, default="귀농")
-argparser.add_argument("--start-date", type=str, default="2025.11.17")
+argparser.add_argument("--start-date", type=str, default="2025.11.14")
 argparser.add_argument("--end-date", type=str, default="2025.11.17")
 argparser.add_argument("--output-path", type=str, default="crawl_news.json")
 argparser.add_argument("--num-processes", type=int, default=10)             # 멀티프로세싱 갯수
@@ -125,7 +127,7 @@ def crawl_news(args: Namespace) -> List[Dict[str, str]]:
                 progress_bar.set_postfix({"date": date, "num_Article":len(news_data)})
                 sleep(args.sleep_time)
 
-        progress_bar.update(1)
+            progress_bar.update(1)
 
     return news_data
 
@@ -134,5 +136,5 @@ if __name__ == "__main__":
 
     news_data = crawl_news(args)
 
-    with open("crawl_news.json", "w", encoding="utf-8") as f:
+    with open("C:/Users/admin/Desktop/data-project/news_crawl/crawl_news.json", "w", encoding="utf-8") as f:
         json.dump(news_data, f, ensure_ascii=False) #유니코드 변환 방지
