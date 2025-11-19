@@ -3,6 +3,11 @@ from kiwipiepy import Kiwi
 from kiwipiepy.utils import Stopwords
 from collections import Counter
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as font_manager
+
+# 막대그래프 폰트 (깨져서 설정)
+plt.rc('font', family='Malgun Gothic')
 
 kiwi = Kiwi()
 stopwords = Stopwords()
@@ -30,6 +35,20 @@ for news in tqdm(news_data, total=len(news_data), mininterval=1):
     counter.update(tokens)
 
 # 상위 n개 단어 빈도 출력
-top_num = 100
-for word, count in counter.most_common(top_num):
-    print(word, count)
+top_num = 50
+
+# for word, count in counter.most_common(top_num): print(word, count)
+
+top_words = counter.most_common(top_num)
+words = [w for w, c in top_words]
+counts = [c for w, c in top_words]
+
+# 막대 그래프 시각화
+plt.figure(figsize=(10, max(6, top_num * 0.35)))  
+plt.barh(words[::-1], counts[::-1])  
+plt.xlabel("Count")
+plt.ylabel("word")
+plt.title(f"Top {top_num} words")
+plt.tight_layout()
+
+plt.show()
