@@ -52,5 +52,3 @@ plt.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), title="지역")
 plt.tight_layout()
 plt.savefig("Processing_population/시도별 귀농인구수.png")
 plt.show()
-
-
