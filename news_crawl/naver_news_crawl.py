@@ -18,10 +18,11 @@ from tqdm import tqdm
 # json 파일 내 title, text로 분리 
 
 # 추후 고려 사항 - 연도별로 구분?
+#   년단위로 기사가 증가?감소?
 
 argparser = ArgumentParser("네이버 뉴스 크롤링")
 argparser.add_argument("--query", type=str, default="귀농")
-argparser.add_argument("--start-date", type=str, default="2025.11.14")
+argparser.add_argument("--start-date", type=str, default="2025.11.17")
 argparser.add_argument("--end-date", type=str, default="2025.11.17")
 argparser.add_argument("--output-path", type=str, default="crawl_news.json")
 argparser.add_argument("--num-processes", type=int, default=10)             # 멀티프로세싱 갯수
@@ -136,5 +137,5 @@ if __name__ == "__main__":
 
     news_data = crawl_news(args)
 
-    with open("C:/Users/admin/Desktop/data-project/news_crawl/crawl_news.json", "w", encoding="utf-8") as f:
+    with open("news_crawl/crawl_news.json", "w", encoding="utf-8") as f:
         json.dump(news_data, f, ensure_ascii=False) #유니코드 변환 방지

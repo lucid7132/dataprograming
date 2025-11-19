@@ -6,13 +6,16 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 
+# 크롤링한 뉴스 json파일을 키워드 분석합니다 
+# + 뉴스 전처리 필요 ( 기자이름, 이메일, ~ 무단배포 머시기 제외 
+
 # 막대그래프 폰트 (깨져서 설정)
 plt.rc('font', family='Malgun Gothic')
 
 kiwi = Kiwi()
 stopwords = Stopwords()
 
-with open('C:/Users/admin/Desktop/data-project/news_crawl/crawl_news.json', 'r', encoding='utf-8') as f:
+with open('news_crawl/crawl_news.json', 'r', encoding='utf-8') as f:
     news_data = json.load(f)
 
 # print(news_data[0]["title"])
