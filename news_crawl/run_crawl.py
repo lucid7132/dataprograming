@@ -4,10 +4,11 @@ from types import SimpleNamespace       # 인자값 전달을 위함
 from naver_news_crawl import crawl_news # 기존파일 함수
 
 # 크롤링 함수의 설정(인자)값 
+# 원하는 주제, 기간, 파일명 입력 
 configs = [
     {
         "query": "귀농",
-        "start_date": "2025.11.20",
+        "start_date": "2025.09.20",
         "end_date": "2025.11.21",
         "filename": "return_farming_news.json"
     },

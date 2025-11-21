@@ -53,7 +53,7 @@ def crawl_one_news_page(url: str) -> Optional[Dict[str, Any]]:
     
     # trafilatura.extract 가 본문을 못읽으면 타입에러 
     except TypeError: 
-        print(f"본문추출실패-{url}")
+        # print(f"본문추출실패-{url}")
         return None
 
 

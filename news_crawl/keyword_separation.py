@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from kiwipiepy import Kiwi
 from kiwipiepy.utils import Stopwords
 from collections import Counter
@@ -7,22 +8,115 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 
+from sklearn.decomposition import NMF
+from sklearn.feature_extraction.text import TfidfTransformer
+from scipy.sparse import dok_matrix
+import numpy as np
+
 # 크롤링한 뉴스 json파일을 키워드 분석합니다 
-# + 뉴스 전처리 필요 ( 기자이름, 이메일, ~ 무단배포 머시기 제외 
 
 # 막대그래프 폰트 (깨져서 설정)
 plt.rc('font', family='Malgun Gothic')
 
-kiwi = Kiwi()
-stopwords = Stopwords()
-stopwords.add(("귀농", "NNG"))
-stopwords.add(("귀촌", "NNG"))
-
 dir_path = "news_crawl/crawl_result"
 all_json = os.listdir(dir_path)
 
+def news_preprocessing(news_data):
+    documents = []
+    invalid_line_patterns = re.compile(
+        r"무단\s*전재|배포\s*금지|Copyrights|관련기사|기사\s*제보|여러분의 제보|카카오톡\s*:s*"
+    )
+
+    for article in tqdm(news_data, mininterval=1):
+        text = article["text"]
+
+        lines = text.split("\n")
+        filtered_lines = []
+
+        for line in lines:
+            line = " ".join(line.split())
+
+            # OOO 기자 패턴 제거
+            line = re.sub(r"\w+ 기자", "", line)
+            # email 주소 제거
+            line = re.sub(r"\w+@\w+\.\w+", "", line)
+            # 뉴스에서 []는 [논산] [대구=뉴시스] 등 다양한 참조를 의미하므로 제거
+            line = re.sub(r"\[.*\]", "", line)
+            # (서울=연합뉴스) 같은 패턴 제거
+            line = re.sub(r"\(.*=.*\)", "", line)
+            # 2024.10.29/뉴스1 같은 패턴 제거
+            line = re.sub(r"\d{4}\.\d{2}\.\d{2}/.*\b", "", line)
+
+            # 공백 제거
+            line = " ".join(line.split())
+            
+            if invalid_line_patterns.search(line):
+                # 무단전재, 배포금지 등이 포함된 문장 이후 문장들은 제외
+                break
+
+            # 한국어가 10자 이상 포함된 경우만 포함
+            num_korean_chars = len(re.findall(r"[ㄱ-ㅎ가-힣]", line))
+            if num_korean_chars >= 10:
+                filtered_lines.append(line)
+
+        text = "\n".join(filtered_lines)
+        # 한국어가 10자 이상 포함된 경우만 포함
+        num_korean_chars = len(re.findall(r"[ㄱ-ㅎ가-힣]", text))
+        if num_korean_chars >= 50:
+            documents.append(text)
+
+    # 중복 제거
+    documents = list(set(documents))
+
+    return documents
+
+def topic_modeling(counter, tokens_list):
+   
+    vocab = [word for word, _ in counter.most_common(10000)]
+    word2idx = {word: idx for idx, word in enumerate(vocab)}
+
+    dtm = dok_matrix((len(tokens_list), len(vocab)), dtype=np.float32)
+
+    for doc_idx, tokens in enumerate(tqdm(tokens_list, mininterval=1)):
+        for token in tokens:
+            try:
+                word_idx = word2idx[token]
+                dtm[doc_idx, word_idx] += 1
+            except KeyError:
+                pass
+
+    dtm = dtm.tocsr()
+    #print(dtm.shape)
+
+    tfidf = TfidfTransformer()
+    tfidf_matrix = tfidf.fit_transform(dtm)
+
+    # 추려낼 토픽 갯수 
+    num_topics = 10
+    nmf = NMF(n_components=num_topics, max_iter=1000, shuffle=True, random_state=42)
+
+    W = nmf.fit_transform(tfidf_matrix)
+    H = nmf.components_
+
+    print(nmf.n_iter_)
+    print(W.shape, H.shape)
+
+    # Topic 별로 가장 가중치 높은 단어 10개 출력
+    for topic_idx in range(num_topics):
+        top_word_indices = H[topic_idx].argsort()[::-1][:10]
+        top_words = [vocab[idx] for idx in top_word_indices]
+        print(f"Topic #{topic_idx}: {', '.join(top_words)}")
+        print()
+
 
 def keyword_separation(file):
+
+    kiwi = Kiwi()
+    stopwords = Stopwords()
+    s_words = ["나누", "담그", "알리", "부르", "이어지", "귀촌", "귀농", "이번", "가능",
+            "마련", "지나", "조성", "밝히"]
+    for word in s_words:
+        stopwords.add(word)
     
     # json 폴더 경로 + 파일이름 
     file_path = os.path.join(dir_path, file)
@@ -35,35 +129,42 @@ def keyword_separation(file):
     with open(file_path, 'r', encoding='utf-8') as f:
         news_data = json.load(f)
 
-    # print(news_data[0]["title"])
+    news_data = news_preprocessing(news_data)
 
     counter = Counter()
+    tokens_list = []
     tags = {"NNG", "NNP", "VV", "VA", "SL"}
 
     # mininterval 업데이트 간격 
     for news in tqdm(news_data, total=len(news_data), mininterval=1):
-        body_text = news["text"].strip()
-        if len(body_text) < 10:
+        if len(news) < 10:
             continue
 
         # 불용어 제거, 특정 품사이면서 길이가 2 이상인 단어만 추출
         tokens = [
             pos.form
-            for pos in kiwi.tokenize(body_text, normalize_coda=True, stopwords=stopwords)
+            for pos in kiwi.tokenize(news, normalize_coda=True, stopwords=stopwords)
             if pos.tag in tags and len(pos.form) > 1
         ]
-        counter.update(tokens)
+
+        if len(tokens) >= 10:
+            tokens_list.append(tokens)
+            counter.update(tokens)
+        
 
     # 상위 n개 단어 빈도 출력
     top_num = 50
+    """for word, freq in counter.most_common(50):
+        print(word, freq)"""
 
-    # for word, count in counter.most_common(top_num): print(word, count)
+    # 토픽 모델링, 행렬을 토픽갯수로 나누어 표현 
+    topic_modeling(counter, tokens_list)
 
+    # 상위 top_num개 막대그래프 시각화
     top_words = counter.most_common(top_num)
     words = [w for w, c in top_words]
     counts = [c for w, c in top_words]
 
-    # 막대 그래프 시각화
     plt.figure(figsize=(10, max(6, top_num * 0.35)))  
     plt.barh(words[::-1], counts[::-1])  
     plt.xlabel("Count")
