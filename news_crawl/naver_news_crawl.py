@@ -24,7 +24,7 @@ argparser = ArgumentParser("네이버 뉴스 크롤링")
 argparser.add_argument("--query", type=str, default="귀농")
 argparser.add_argument("--start-date", type=str, default="2025.11.17")
 argparser.add_argument("--end-date", type=str, default="2025.11.17")
-argparser.add_argument("--output-path", type=str, default="crawl_news.json")
+argparser.add_argument("--output-path", type=str, default="news_crawl/crawl_news.json")
 argparser.add_argument("--num-processes", type=int, default=10)             # 멀티프로세싱 갯수
 argparser.add_argument("--sleep-time", type=float, default=0.5)             # 매 시도 마다 기다릴시간
 argparser.add_argument("--max-trials", type=int, default=3)                 # 최대 재시도 횟수 
@@ -137,5 +137,5 @@ if __name__ == "__main__":
 
     news_data = crawl_news(args)
 
-    with open("news_crawl/crawl_news.json", "w", encoding="utf-8") as f:
+    with open(args.output_path, "w", encoding="utf-8") as f:
         json.dump(news_data, f, ensure_ascii=False) #유니코드 변환 방지
