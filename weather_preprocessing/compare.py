@@ -1,3 +1,4 @@
+#강원도 3개 지역의 기후 데이터와 전국 상위 3개 지역의 평균값을 지표별로 비교하여 막대 그래프로 시각화하는 코드
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -124,4 +125,5 @@ if __name__ == "__main__":
         plot_comparison(gw_selected, other_top3)
         
     else:
+
         print("파일을 찾을 수 없습니다.")
