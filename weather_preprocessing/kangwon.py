@@ -1,3 +1,4 @@
+#강원도 주요 지역의 기후 데이터를 분석하여 사용자 선호도(가중치)에 따른 귀농 최적지 순위를 산출하고 그래프로 시각화하는 코드
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -120,4 +121,5 @@ if __name__ == "__main__":
         visualization(rec_df)
         
     else:
+
         print("파일을 찾을 수 없습니다.")
