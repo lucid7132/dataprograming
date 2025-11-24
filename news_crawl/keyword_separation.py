@@ -117,10 +117,8 @@ def keyword_separation(file: str):
     # json 폴더 경로 + 파일이름 
     file_path = os.path.join(dir_path, file)
 
-    # 확장자명 json -> png 로 변경 ( 시각화 .png 파일 저장 위치용도)
+    # 확장자 json 없는 파일명 저장 
     file_no_json = os.path.splitext(os.path.basename(file_path))[0]
-    file_no_json = f"{file_no_json}.png"
-    png_path = os.path.join("news_crawl/keyword_result", file_no_json)
 
     with open(file_path, 'r', encoding='utf-8') as f:
         news_data = json.load(f)
@@ -178,6 +176,10 @@ def keyword_separation(file: str):
     plt.ylabel("word")
     plt.title(f"Top {top_num} words")
     plt.tight_layout()
+
+    # 확장자명 json -> png 로 변경 ( 시각화 .png 파일 저장 위치용도)
+    file_no_json = f"{file_no_json}.png"
+    png_path = os.path.join("news_crawl/keyword_result", file_no_json)
     plt.savefig(png_path)
     #plt.show()
 
@@ -187,4 +189,5 @@ if __name__ == "__main__":
     # 크롤링 결과 폴더 crawl_result 내의 모든 json 파일을 분석
     for file in all_json:
         keyword_separation(file)
-        print(f"{file} : 완료 ")
+        print(f"{file} : 완료")
+        print()
