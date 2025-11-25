@@ -33,9 +33,6 @@ for at_col, nong_col in column_mapping.items():
     temp_df = pd.concat([series_at, series_nong], axis=1)
     
     # 1. 값 병합 로직 적용 (mean 함수는 NaN을 무시하고 평균을 구함)
-    # - 둘 다 존재: (A+B)/2
-    # - 하나만 존재: 존재하는 값
-    # - 둘 다 없음: NaN
     merged_series = temp_df.mean(axis=1)
     
     # 2. 선형 보간 (Linear Interpolation) 적용
@@ -55,6 +52,6 @@ final_df.index.name = 'Year'
 output_file = 'mix_price.csv'
 final_df.to_csv(output_file)
 
-print(f"✅ 병합 및 보간 완료! '{output_file}' 파일이 생성되었습니다.")
+print(f"병합 및 보간 '{output_file}'")
 print("\n[생성된 데이터 미리보기]")
 print(final_df.head(15)) # 전체 연도 확인

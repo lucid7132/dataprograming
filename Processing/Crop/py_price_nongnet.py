@@ -78,6 +78,6 @@ if results:
     # 결과 파일은 실행 위치에 저장됩니다.
     output_file = 'nongnet_processing_data.csv'
     final_df.to_csv(output_file, float_format='%.1f')
-    print(f"\n✅ 완료! '{output_file}' 파일이 생성되었습니다.")
+    print(f"\n완료 '{output_file}'")
 else:
     print("\n처리된 데이터가 없습니다. 'data/nongnet' 폴더 안에 파일이 있는지 확인해주세요.")
