@@ -1,4 +1,4 @@
-#강원도 3개 지역의 기후 데이터와 전국 상위 3개 지역의 평균값을 지표별로 비교하여 막대 그래프로 시각화하는 코드
+#강원도 3개 지역의 기후 데이터와 전국 상위 3개 지역의 평균값을 지표별로 비교하여 방사형 차트(Radar Chart)로 시각화하는 코드
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -7,11 +7,10 @@ import os
 import matplotlib.font_manager as fm
 import weather as wt
 import kangwon as kw
+from math import pi
 
 plt.rcParams['font.family'] ='Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] =False
-
-
 
 
 def get_stats(df):
@@ -39,68 +38,74 @@ def select_comparison_groups(df, weights):
     # kangwon.py의 함수 이용
     rec = kw.calculate_recommendation_score(df, weights)
     
-    # 동해, 강릉, 원주
-    target_gw = ['동해', '강릉', '원주']
-    gw_selected = rec[rec['지역'].isin(target_gw)].copy()
+    # 강원도 Top 3
+    gw_top3 = rec[rec['시도'] == '강원'].sort_values('추천점수', ascending=False).head(3).copy()
+    gw_top3['구분'] = gw_top3['시도'] + ' ' + gw_top3['지역']
     
-    # 강원을 제외한 점수 상위 3지역
-    top3_candidates = rec[rec['시도'] != '강원'].sort_values('추천점수', ascending=False).head(3)
+    # 강원 제외 전국 Top 3
+    other_top3 = rec[rec['시도'] != '강원'].sort_values('추천점수', ascending=False).head(3)
     
-    # 상위 3개의 데이터 평균
-    top3_mean_series = top3_candidates.mean(numeric_only=True)
-    other_top3 = top3_mean_series.to_frame().T
+    # 전국 Top 3 평균 계산
+    other_mean = other_top3.mean(numeric_only=True).to_frame().T
+    other_mean['지역'] = '전국 Top3 평균'
+    other_mean['시도'] = '전국'
+    other_mean['구분'] = '전국 Top3 평균'
     
+    # 합치기 (강원 Top3 + 전국 Top3 평균)
+    comparison_df = pd.concat([gw_top3, other_mean], ignore_index=True)
     
-    other_top3['지역'] = '전국 Top3 평균'
-    other_top3['시도'] = '전국'
+    return comparison_df
 
-    return gw_selected, other_top3
 
-
-
-def plot_comparison(gw_df, other_df):
-    comparison_df = pd.concat([gw_df, other_df])
+def plot_radar(df):
+    # 시각화할 컬럼 정의 (기후요소만)
+    categories = ['겨울기온', '여름강수', '평균풍속', '일조시간', '최대적설']
+    N = len(categories)
     
+    # 데이터 준비 (인덱스를 '구분'으로 설정)
+    plot_data = df.set_index('구분')[categories]
     
-    group_name = '강원'
-    comparison_df['그룹'] = comparison_df['시도'].apply(lambda x: group_name if x == '강원' else '전국 기후 TOP3')
+    # 정규화 (0.2 ~ 1.0) - 0이 되는 것을 방지하여 시각적 왜곡 최소화
+    # 공식: 0.2 + 0.8 * (x - min) / (max - min)
+    norm_data = 0.2 + 0.8 * (plot_data - plot_data.min()) / (plot_data.max() - plot_data.min())
     
-    metrics = [
-        ('겨울기온', '겨울철 최저기온 (°C)'),
-        ('여름강수', '여름철 총 강수량 (mm)'),
-        ('평균풍속', '연평균 풍속 (m/s)'),
-        ('일조시간', '연간 일조시간 (hr)'),
-        ('최대적설', '연간 최대 적설 (cm)')
-    ]
+    # 방사형 차트 설정
+    angles = [n / float(N) * 2 * pi for n in range(N)]
+    angles += angles[:1]  # 닫힌 도형을 만들기 위해 첫 번째 각도 추가
     
-    fig, axes = plt.subplots(2, 3, figsize=(18, 10))
-    axes = axes.flatten()
+    plt.figure(figsize=(10, 10))
+    ax = plt.subplot(111, polar=True)
     
-    # 색상 설정
-    palette = {group_name: 'blue', '전국 기후 TOP3': 'gray'}
+    # 첫 번째 축이 12시 방향에 오도록 설정
+    ax.set_theta_offset(pi / 2)
+    ax.set_theta_direction(-1)
     
-    for i, (col, title) in enumerate(metrics):
-        ax = axes[i]
-        sns.barplot(data=comparison_df, x='지역', y=col, hue='그룹', dodge=False, ax=ax, palette=palette)
+    # 축 라벨 설정
+    plt.xticks(angles[:-1], categories, fontsize=12, fontweight='bold')
+    
+    # y축 라벨 설정 (0.2, 0.4, 0.6, 0.8)
+    ax.set_rlabel_position(0)
+    plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=10)
+    plt.ylim(0, 1)
+    
+    # 각 지역별 데이터 플롯
+    colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33F6'] # 색상 지정
+    
+    for i, (idx, row) in enumerate(norm_data.iterrows()):
+        values = row.values.flatten().tolist()
+        values += values[:1]  # 닫힌 도형
         
-        ax.set_title(title, fontsize=12, fontweight='bold')
-        ax.set_xlabel('')
-        ax.legend_.remove()
-        ax.grid(axis='y', alpha=0.3)
+        ax.plot(angles, values, linewidth=2, linestyle='solid', label=idx, color=colors[i % len(colors)])
+        ax.fill(angles, values, color=colors[i % len(colors)], alpha=0.1)
     
+    plt.title('강원 Top 3 vs 전국 Top 3(평균) 기후 특성 비교 (방사형 차트)', size=20, color='black', y=1.1, fontweight='bold')
+    plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1), fontsize=12)
     
-
-    handles, labels = axes[0].get_legend_handles_labels()
-    axes[5].legend(handles, labels, title='비교 그룹', fontsize=14, loc='center')
-    axes[5].axis('off')
-    
-    plt.suptitle('강원도 추천 3사(동해/강릉/원주) vs 전국 귀농 최적지 기후 비교', fontsize=20, fontweight='bold')
     plt.tight_layout()
     plt.show()
 
 
-
-if __name__ == "__main__":
+def main():
     file_name = 'OBS_ASOS_MNH_20251119143018.csv'
     
     if os.path.exists(file_name):
@@ -110,20 +115,23 @@ if __name__ == "__main__":
 
         df_stats = get_stats(df_raw)
 
-        # 가중치 설정
-        user_weights = {'겨울기온': 3.0, '여름강수': 1.0, '평균풍속': 2.0, '일조시간': 1.5, '최대적설': 2.5}
+        # 가중치 설정 (kangwon.py와 동일하게 설정하거나 사용자 정의)
+        user_weights = {
+            '겨울기온': 2.0, '여름강수': 1.0, '평균풍속': 2.0,
+            '일조시간': 3.0, '최대적설': 2.5
+        }
         
-        # 원주 포함하여 추출
-        gw_selected, other_top3 = select_comparison_groups(df_stats, user_weights)
+        # 비교 데이터 추출
+        comparison_df = select_comparison_groups(df_stats, user_weights)
 
-        print("강원도 비교군 (원주 포함)")
-        print(gw_selected[['지역', '추천점수', '겨울기온', '최대적설']])
+        print("비교 데이터 (Raw Values)")
+        print(comparison_df[['구분', '겨울기온', '여름강수', '평균풍속', '일조시간', '최대적설']])
     
-        print("\n 전국 기후 최적지 TOP 3 (평균값)")
-        print(other_top3[['지역', '추천점수', '겨울기온', '최대적설']])
-    
-        plot_comparison(gw_selected, other_top3)
+        plot_radar(comparison_df)
         
     else:
 
         print("파일을 찾을 수 없습니다.")
+
+if __name__ == "__main__":
+    main()

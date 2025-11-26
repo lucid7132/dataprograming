@@ -50,7 +50,6 @@ def process_agricultural_data(file_name, item_name):
     # 결과 Series 반환 (리스트가 아닌 단일 Series 반환)
     return price_series 
 
-
 files = {
     '고랭지 무.csv': '고랭지무',
     '고랭지 배추.csv': '고랭지배추',
