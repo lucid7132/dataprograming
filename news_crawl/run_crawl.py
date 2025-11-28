@@ -36,7 +36,7 @@ def run_crawl(year:int , config:List[Dict]):
     os.makedirs(save_dir, exist_ok=True)
 
     start_date = f"{year}0101"
-    end_date = f"{year}0101"
+    end_date = f"{year}1230"
     output_path = f"{config["filename"]}_{year}.json"
 
     print(f"{config['query']}_{year} 크롤링 시작")
