@@ -32,17 +32,29 @@ df_trans = df[year_list].T
 # 데이터숫자로 변환, 안하면 그래프가 겹쳐서 그려지지 않았습니다 
 df_trans = df_trans.replace(',', '', regex=True).apply(pd.to_numeric)
 
-# 평균 계산후 너무적은 지역배제 
+# 상위 3지역 + 강원특별자치도만 남게 정리 
 region_mean = df_trans.mean(axis=0)
-target_regions = region_mean[region_mean >= 1000].index
+region_mean = region_mean.sort_values()
+
+target_regions = region_mean.index[-3:].tolist()
+spec_region = '강원특별자치도'
+if spec_region in df_trans.columns:
+    if spec_region not in target_regions:
+        target_regions.append(spec_region)
+else:
+    print(f"{spec_region} : 데이터가 없습니다.")
 
 df_filtered = df_trans[target_regions]
 
 # 꺾은선 그래프 시각화
 plt.figure(figsize=(12, 7))
 
+# 강원도 강조 
 for region in df_filtered.columns:
-    plt.plot(year_list, df_filtered[region], marker='o', linewidth=1.5, label=region)
+    if region == '강원특별자치도':
+        plt.plot(year_list, df_filtered[region], marker='o', linewidth=2, color='red', label=region)
+    else:
+        plt.plot(year_list, df_filtered[region], marker='o', linewidth=1.5, label=region)
 
 plt.title('시도별 귀농인구수')
 plt.xlabel('연도')
@@ -51,4 +63,4 @@ plt.grid(True, linestyle='--', linewidth=0.5)
 plt.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), title="지역")
 plt.tight_layout()
 plt.savefig("Processing_population/시도별 귀농인구수.png")
-plt.show()
+#plt.show()
