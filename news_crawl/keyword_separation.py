@@ -15,6 +15,8 @@ import numpy as np
 
 # 크롤링한 뉴스 json파일을 분석합니다 
 # 뉴스 전처리 -> 키워드 분석 -> 토픽 모델링 
+# 결과: keyword_result/{filename}.txt 파일 - 토픽모델링 결과값
+# 결과: keyword_result/{filename}.png 파일 - 키워드분석 막대그래프 시각화 
 
 # 막대그래프 폰트 (깨져서 설정)
 plt.rc('font', family='Malgun Gothic')
@@ -22,6 +24,7 @@ plt.rc('font', family='Malgun Gothic')
 dir_path = "news_crawl/crawl_result"
 all_json = os.listdir(dir_path)
 
+# 뉴스 전처리입니다
 def news_preprocessing(news_data) -> list:
     documents = []
     invalid_line_patterns = re.compile(
@@ -63,7 +66,7 @@ def news_preprocessing(news_data) -> list:
         text = "\n".join(filtered_lines)
         # 한국어가 10자 이상 포함된 경우만 포함
         num_korean_chars = len(re.findall(r"[ㄱ-ㅎ가-힣]", text))
-        if num_korean_chars >= 50:
+        if num_korean_chars >= 10:
             documents.append(text)
 
     # 중복 제거
