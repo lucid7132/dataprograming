@@ -13,12 +13,9 @@ from trafilatura.settings import DEFAULT_CONFIG # trafilatura 설정
 from pandas import date_range                   # 날짜 리스트 받기 
 from tqdm import tqdm
 
-# 네이버 뉴스 크롤링
+# 네이버 뉴스 크롤링 - 실행은 run_crawl.py 로 해주세요 
 # 크롤링한 파일 생성 : 파일명 crawl_news.json
 # json 파일 내 title, text로 분리 
-
-# 추후 고려 사항 - 연도별로 구분?
-#   년단위로 기사가 증가?감소?
 
 argparser = ArgumentParser("네이버 뉴스 크롤링")
 argparser.add_argument("--query", type=str, default="귀농")
@@ -101,7 +98,11 @@ def crawl_news(args: Namespace) -> List[Dict[str, str]]:
                         sleep(args.sleep_time)
                         num_trials += 1
                 
-                r_data = response.json()
+                try:
+                    r_data = response.json()
+                except json.JSONDecodeError as e:
+                    print(f"JSON 파싱 오류 : {e}")
+                
                 # 빈 url 이면 collection이 공백(None)
                 if "collection" not in r_data or r_data["collection"] is None: 
                     break

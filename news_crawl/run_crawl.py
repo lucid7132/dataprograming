@@ -3,20 +3,32 @@ import os
 from types import SimpleNamespace       # 인자값 전달을 위함
 from naver_news_crawl import crawl_news # 기존파일 함수
 
-# 크롤링 함수의 설정(인자)값 
-# 원하는 주제, 기간, 파일명 입력 
-configs = [
-    {
-        "query": "귀농",
-        "start_date": "2025.09.20",
-        "end_date": "2025.11.21",
-        "filename": "return_farming_news.json"
-    },
+# 크롤링 함수의 설정(인자)값
+# 원하는 주제, 기간, 파일명을 configs 에 추가 후 실행
+# 결과값은 crawl_result/{filename}.json에 저장됩니다. 
+
+# configs 예시입니다. 
+"""
     {
         "query": "작물",
         "start_date": "2025.11.20",
         "end_date": "2025.11.21",
         "filename": "crops_news.json"
+    }
+"""
+
+configs = [
+    {
+        "query": "귀농",
+        "start_date": "2020.01.01",
+        "end_date": "2020.06.30",
+        "filename": "return_farming_news_202001_06.json"
+    },
+    {
+        "query": "귀농",
+        "start_date": "2020.07.01",
+        "end_date": "2020.12.30",
+        "filename": "return_farming_news_202006_12.json"
     }
 ]
 
@@ -34,7 +46,7 @@ def run_crawl():
             start_date=config["start_date"],
             end_date=config["end_date"],
             output_path=config["filename"],
-            num_processes=4,
+            num_processes=10,
             sleep_time=0.5,
             max_trials=3
         )
