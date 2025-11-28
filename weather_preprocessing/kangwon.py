@@ -53,10 +53,12 @@ def aggregate_climate_stats(df):
         sun = group.groupby('연도')['합계 일조시간(hr)'].sum().mean()
         snow = group.groupby('연도')['최심적설(cm)'].max().mean()
 
-        # SPI 지수는 -1.5 이하가 매우 건조, 2.0 이상이 매우 습윤으로 간주
-        spi3 = len(group[group['SPI3'] <= -1.5]) + len(group[group['SPI6'] <= -1.5])
-        spi6 = len(group[group['SPI3'] >= 2.0]) + len(group[group['SPI6'] >= 2.0])
-        spi = spi3 + spi6
+        # SPI 지수는 -1.0 이하가 매우 건조, 1.5 이상이 매우 습윤으로 간주
+        drought_count = len(group[(group['SPI3'] <= -1.0) | (group['SPI6'] <= -1.0)])
+
+        # 전체 기간으로 나누어 '빈도(비율)' 계산
+        drought = drought_count / len(group)
+        wet = len(group[group['SPI3'] >= 1.5]) + len(group[group['SPI6'] >= 1.5])
 
         results.append({
             '지역': station,
@@ -65,7 +67,8 @@ def aggregate_climate_stats(df):
             '평균풍속': wind,
             '일조시간': sun,
             '최대적설': snow,
-            '가뭄_침수_빈도' : spi
+            '가뭄안전성' : drought,
+            '침수안정성' : wet
         })
     return pd.DataFrame(results)
 
@@ -78,11 +81,12 @@ def calculate_recommendation_score(df, weights):
         rec[col] = (df[col] - df[col].min()) / (df[col].max() - df[col].min())
         
     # 부정 요인 정규화 (작을수록 좋음 여름강수, 최대적설, 가뭄 침수 빈도)
-    for col in ['최대적설', '가뭄_침수_빈도']:
+    for col in ['최대적설', '가뭄안전성', '침수안정성']:
         if df[col].max() == df[col].min():
             rec[col] = 1.0
         else:
             rec[col] = 1 - ((df[col] - df[col].min()) / (df[col].max() - df[col].min()))
+    
     
     # 풍속은 1~3m/s가 가장 적합
     # 10m/s는 사람이 살기 힘든 정도이므로 0점 처리
@@ -110,7 +114,8 @@ def calculate_recommendation_score(df, weights):
         rec['평균풍속'] * weights['평균풍속'] +
         rec['일조시간'] * weights['일조시간'] +
         rec['최대적설'] * weights['최대적설'] +
-        rec['가뭄_침수_빈도'] * weights['가뭄_침수_빈도']
+        rec['가뭄안전성'] * weights['가뭄안전성'] +
+        rec['침수안정성'] * weights['침수안정성']
     )
     total_weight = sum(weights.values())
     rec['추천점수'] = (rec['추천점수'] / total_weight) * 100
@@ -170,8 +175,12 @@ if __name__ == "__main__":
         # 중요하다고 생각하는 요인의 가중치를 더 높게 줄수록 더 높은 점수를 부여함
         # 강원도의 기온이 타 지역보다 많이 낮으므로 기온에 더 가중치를 둠
         user_weights = {
-            '겨울기온': 3.0, '평균풍속': 2.0,
-            '일조시간': 1.5, '최대적설': 2.5, '가뭄_침수_빈도': 2.0
+            '겨울기온': 2.0,   # 중요함
+            '일조시간': 1.5,   # 식물 성장에 필수
+            '평균풍속': 1.5,   # 적당한 환기 필요
+            '최대적설': 2.0,   # 강원도 특성상 눈 중요
+            '가뭄안전성': 2.0,   # 기온만큼 중요하게 설정
+            '침수안정성': 2.0    # 기온만큼 중요하게 설정
         }
         rec_df = calculate_recommendation_score(df_stats, user_weights)
         
