@@ -1,10 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
 import os
-import matplotlib.font_manager as fm
-import preprocessing as pp
 
 
 plt.rcParams['font.family'] ='Malgun Gothic'
