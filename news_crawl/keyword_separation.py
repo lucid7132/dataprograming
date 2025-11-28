@@ -12,6 +12,8 @@ from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfTransformer
 from scipy.sparse import dok_matrix
 import numpy as np
+import pandas as pd
+# from keywords_change_by_year import keywords_change_by_year 추후 # 제거후 적용할것 266줄도 
 
 # 크롤링한 뉴스 json파일을 분석합니다 
 # 뉴스 전처리 -> 키워드 분석 -> 토픽 모델링 
@@ -23,6 +25,10 @@ plt.rc('font', family='Malgun Gothic')
 
 dir_path = "news_crawl/crawl_result"
 all_json = os.listdir(dir_path)
+
+import_keywords = ['정책', '교육','농사', '스마트', '인구', '주택']
+years =[]
+imkeys_dict = {}
 
 # 뉴스 전처리입니다
 def news_preprocessing(news_data) -> list:
@@ -106,8 +112,16 @@ def topic_modeling(counter: Counter, tokens_list: list, file_no_json: str):
     #print(W.shape, H.shape)   
 
     # Topic 별로 가장 가중치 높은 단어 10개 저장 
-    file_no_json = f"{file_no_json}.txt"
-    txt_path = os.path.join("news_crawl/keyword_result", file_no_json)
+    file_txt = f"{file_no_json}.txt"
+    txt_path = os.path.join("news_crawl/keyword_result", file_txt)
+
+    # 워드클라우드용 설정입니다
+    save_topic_dir = f"news_crawl/keyword_result/{file_no_json}_topic"
+    os.makedirs(save_topic_dir, exist_ok=True)
+    file_png = f"{file_no_json}_topic"
+    img = Image.open("news_crawl/Circle.png")
+    mask_arr = np.array(img)
+
     with open(txt_path, 'w', encoding='utf-8') as f:
         for topic_idx in range(num_topics):
             top_word_indices = H[topic_idx].argsort()[::-1][:10]
@@ -138,7 +152,7 @@ def keyword_separation(file: str):
     stopwords = Stopwords()
     s_words = {('귀농', 'NNG'), ('이번', 'NNG'), ('기자', 'NNG'), ('만들', 'VV'), ('가능', 'NNG'),
                 ('마련', 'NNG'), ('지나', 'VV'), ('밝히', 'VV'), ('보이', 'VV'), ('이어지', 'VV'), 
-                ('열리', 'VV')}
+                ('열리', 'VV'), ('오전', 'NNG'), ('오후', 'NNG')}
     stopwords.add(s_words)
 
     # mininterval 업데이트 간격 
@@ -162,8 +176,23 @@ def keyword_separation(file: str):
     # 상위 n개 단어 빈도 출력
     top_num = 50
     # for word, freq in counter.most_common(top_num): print(word, freq)
+    
+    # 파일명에서 연도 추출 및 데이터 프레임용 데이터 생성 
+    try:
+        year = file_no_json.split("_")[-1]
+        years.append(year)
+        imkeys_value = []
+        for i in import_keywords:
+            imkeys_value.append(counter[i])
+        imkeys_dict.update({f'{year}' : imkeys_value})
+    except Exception as e:
+        print(f"{e} : 데이터 프레임용 데이터 생성중 오류 ")
+        # 위 오류는 귀농 주요키워드 변화를 알기위해 작성한 코드에서 나온 오류입니다.
+        # 단일파일이나 다른 주제로 크롤링을 할시 나타나면 무시하셔도 좋습니다. 
+    # 예시 : {'2020': [6097, 13461, 3412, 2397, 3704, 6013, 3704]} 
 
     # 토픽 모델링, 행렬을 토픽갯수로 나누어 표현 
+    # 토픽 모델링 건너뛰려면 아래코드를 주석처리 해주세요
     topic_modeling(counter, tokens_list, file_no_json)
     print(f"{file} : 토픽 모델링 완료")
 
@@ -189,8 +218,21 @@ def keyword_separation(file: str):
     return 0;
 
 if __name__ == "__main__":
+
     # 크롤링 결과 폴더 crawl_result 내의 모든 json 파일을 분석
     for file in all_json:
         keyword_separation(file)
         print(f"{file} : 완료")
         print()
+    
+
+    try:
+        imkeys_df = pd.DataFrame(imkeys_dict, index=import_keywords, columns=years)
+        imkeys_df.to_csv('news_crawl/keywords_change_by_year/keywords_change_by_year.csv')
+        print("연도별 키워드 추이 분석용 csv파일 생성완료")
+        # keywords_change_by_year(imkeys_df) 추후 # 제거후 적용할것 
+    except Exception as e:
+        print(f"{e} : 데이터 프레임 생성중 오류 ")
+        print("import_keywords 데이터프레임으로 만들기 실패 ")
+        # 위 오류는 귀농 주요키워드 변화를 알기위해 작성한 코드에서 나온 오류입니다.
+        # 단일파일이나 다른 주제로 크롤링을 할시 나타나면 무시하셔도 좋습니다. 
