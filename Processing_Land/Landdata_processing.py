@@ -46,7 +46,7 @@ def get_fluctuation_data(file_path):
         month_cols = [c for c in df.columns if "월" in str(c)]
         if not month_cols: return pd.DataFrame(columns=["City", "GrowthRate"])
 
-        # 날짜 파싱하여 가장 최근 월 찾기
+        # 날짜 parsing 하여 가장 최근 월 찾기
         def parse_date(c):
             digits = "".join(filter(str.isdigit, c))
             return int(digits) if digits else 0
@@ -62,7 +62,7 @@ def get_fluctuation_data(file_path):
         # 도시별 평균 (같은 시군구 이름이 있을 수 있으므로 grouping)
         return df.groupby("City", as_index=False)["GrowthRate"].mean()
     except Exception as e:
-        print(f"   [Error] 지가 변동률 파일 읽기 실패: {e}")
+        print(f"에러 지가 변동률 파일 읽기 실패: {e}")
         return pd.DataFrame(columns=["City", "GrowthRate"])
 
 def get_area_data(file_path):
@@ -85,7 +85,7 @@ def get_area_data(file_path):
 
         return df[["Province", "City", "FieldArea"]].dropna()
     except Exception as e:
-        print(f"   [Error] 경지면적 파일 읽기 실패: {e}")
+        print(f"    에러 경지면적 파일 읽기 실패: {e}")
         return pd.DataFrame(columns=["Province", "City", "FieldArea"])
 
 def get_combined_volume_data(f_status, f_trend):
@@ -124,8 +124,8 @@ def get_combined_volume_data(f_status, f_trend):
     
     full = pd.concat(dfs)
     # 시군구별 합계
-    return full.groupby(["Province", "City"], as_index=False)["Vol"].sum().rename(columns={"Vol": "Total_Volume"})
-
+    return full.groupby(["Province", "City"], as_index=False)["Vol"].sum().rename(columns={"Vol": "Total_Volume"}) 
+    
 def main():
     # 파일명 정의 (실제 파일 경로 확인 필요)
     f_price = "2014년+1분기+시.군별+필지별+평균가격+현황.csv"
@@ -143,31 +143,22 @@ def main():
     # 2. 데이터 병합 (Province, City 기준)
     merged = pd.merge(df_p, df_a, on=["Province", "City"], how="outer")
     merged = pd.merge(merged, df_v, on=["Province", "City"], how="outer")
-    
-    # 지가변동률은 Province 정보가 없으므로 City로 병합
     merged = pd.merge(merged, df_f, on="City", how="left")
 
     # 3. 데이터 정제 (Province 단위 집계를 위해)
-    # Province가 결측이거나 '전국', '소계' 등 불필요한 데이터 제거
     merged = merged.dropna(subset=["Province"])
     merged = merged[~merged["Province"].astype(str).str.contains("전국|소계|합계")]
-    # Province 길이가 2 이상인 것만 (정상적인 시도명)
     merged = merged[merged["Province"].astype(str).str.len() > 1]
 
     # 4. 시도(Province) 별 평균 계산
-    # 숫자형 컬럼만 선택하여 평균
     numeric_cols = ["BasePrice", "GrowthRate", "FieldArea", "Total_Volume"]
     prov_avg = merged.groupby("Province")[numeric_cols].mean()
-
-    # 정렬: 평균 지가 기준 내림차순
     prov_avg = prov_avg.sort_values("BasePrice", ascending=False)
 
     print("\n[Result] 시도별 지표 평균 산출 완료")
     print(prov_avg)
 
-    # 5. 시각화 (4개 서브플롯)
-    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-    
+    # 5. 시각화 (개별 그래프로 출력)
     metrics = [
         ("BasePrice", "평균 농지가격 (원/㎡)"),
         ("GrowthRate", "평균 지가 변동률 (%)"),
@@ -175,17 +166,21 @@ def main():
         ("Total_Volume", "평균 거래량 (건)")
     ]
 
-    for i, (col, title) in enumerate(metrics):
-        ax = axes[i // 2, i % 2]
+    for col, title in metrics:
+        # ** 핵심 변경: 각 지표마다 1x1의 Figure를 새로 생성한다. **
+        fig, ax = plt.subplots(1, 1, figsize=(10, 6))
         
-        # 해당 지표 데이터 추출 (NaN 제외)
+        # 해당 지표 데이터 추출 및 정렬
         sub_data = prov_avg[col].dropna().sort_values(ascending=False)
         
         if sub_data.empty:
-            ax.text(0.5, 0.5, "데이터 없음", ha='center', va='center')
+            ax.text(0.5, 0.5, "데이터 없음", ha='center', va='center', transform=ax.transAxes)
+            ax.set_title(f"시도별 {title}")
+            plt.tight_layout()
+            plt.show()
             continue
 
-        # 색상 설정: 강원도만 붉은색(crimson), 나머지는 회색(lightgray)
+        # 색상 설정 및 플롯 로직 (기존과 동일)
         colors = []
         for idx in sub_data.index:
             if "강원" in str(idx):
@@ -205,9 +200,10 @@ def main():
                         f"{height:,.1f}", 
                         ha='center', va='bottom', color='red', fontweight='bold')
 
-    plt.tight_layout()
-    plt.show()
-    print("완료: 그래프가 생성되었습니다.")
+        plt.tight_layout()
+        plt.show() # ** 핵심 변경: 그래프를 그릴 때마다 바로바로 띄운다. **
+
+    print("완료: 4개의 개별 그래프가 순차적으로 생성되었습니다.")
 
 if __name__ == "__main__":
     main()
