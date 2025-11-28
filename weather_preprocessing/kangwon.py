@@ -40,7 +40,7 @@ def load_gangwon_data(file_path):
     df['연도'] = df['일시'].dt.year
     df['월'] = df['일시'].dt.month
     
-    cols = ['최심적설(cm)', '합계 일조시간(hr)']
+    cols = ['합계 일조시간(hr)']
     for c in cols:
         if c in df.columns: df[c] = df[c].fillna(0)
     return df
@@ -48,10 +48,9 @@ def load_gangwon_data(file_path):
 def aggregate_climate_stats(df):
     results = []
     for (station, province), group in df.groupby(['지점명', '시도']):
-        winter_temp = group[group['월'].isin([12,1,2])]['평균최저기온(°C)'].mean()
+        winter_temp = group[group['월'].isin([12,1,2])]['최저기온(°C)'].mean()
         wind = group['평균풍속(m/s)'].mean()
         sun = group.groupby('연도')['합계 일조시간(hr)'].sum().mean()
-        snow = group.groupby('연도')['최심적설(cm)'].max().mean()
 
         # SPI 지수는 -1.0 이하가 매우 건조, 1.5 이상이 매우 습윤으로 간주
         drought_count = len(group[(group['SPI3'] <= -1.0) | (group['SPI6'] <= -1.0)])
@@ -66,7 +65,6 @@ def aggregate_climate_stats(df):
             '겨울기온': winter_temp,
             '평균풍속': wind,
             '일조시간': sun,
-            '최대적설': snow,
             '가뭄안전성' : drought,
             '침수안정성' : wet
         })
@@ -80,8 +78,8 @@ def calculate_recommendation_score(df, weights):
     for col in ['겨울기온', '일조시간']:
         rec[col] = (df[col] - df[col].min()) / (df[col].max() - df[col].min())
         
-    # 부정 요인 정규화 (작을수록 좋음 여름강수, 최대적설, 가뭄 침수 빈도)
-    for col in ['최대적설', '가뭄안전성', '침수안정성']:
+    # 부정 요인 정규화 (작을수록 좋음 여름강수, 가뭄 침수 빈도)
+    for col in ['가뭄안전성', '침수안정성']:
         if df[col].max() == df[col].min():
             rec[col] = 1.0
         else:
@@ -113,7 +111,6 @@ def calculate_recommendation_score(df, weights):
         rec['겨울기온'] * weights['겨울기온'] +
         rec['평균풍속'] * weights['평균풍속'] +
         rec['일조시간'] * weights['일조시간'] +
-        rec['최대적설'] * weights['최대적설'] +
         rec['가뭄안전성'] * weights['가뭄안전성'] +
         rec['침수안정성'] * weights['침수안정성']
     )
@@ -178,7 +175,6 @@ if __name__ == "__main__":
             '겨울기온': 2.0,   # 중요함
             '일조시간': 1.5,   # 식물 성장에 필수
             '평균풍속': 1.5,   # 적당한 환기 필요
-            '최대적설': 2.0,   # 강원도 특성상 눈 중요
             '가뭄안전성': 2.0,   # 기온만큼 중요하게 설정
             '침수안정성': 2.0    # 기온만큼 중요하게 설정
         }

@@ -1,10 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
 import os
-import matplotlib.font_manager as fm
-import weather as wt
 import kangwon as kw
 from math import pi
 
@@ -46,7 +42,7 @@ def select_comparison_groups(df, weights):
 
 def plot_radar(df):
     # 1. 시각화할 컬럼 지정
-    categories = ['겨울기온', '가뭄안전성', '침수안정성', '평균풍속', '일조시간', '최대적설']
+    categories = ['겨울기온', '가뭄안전성', '침수안정성', '평균풍속', '일조시간']
     N = len(categories)
     
     # 2. 각도 계산 (12시 방향 시작, 시계 방향)
@@ -106,7 +102,6 @@ if __name__ == "__main__":
             '겨울기온': 2.0,   # 중요함
             '일조시간': 1.5,   # 식물 성장에 필수
             '평균풍속': 1.5,   # 적당한 환기 필요
-            '최대적설': 2.0,   # 강원도 특성상 눈 중요
             '가뭄안전성': 2.0,   # 기온만큼 중요하게 설정
             '침수안정성': 2.0    # 기온만큼 중요하게 설정
         }
@@ -115,7 +110,7 @@ if __name__ == "__main__":
         gw_selected = select_comparison_groups(df_stats, user_weights)
 
         print("비교 데이터 (Raw Values)")
-        print(gw_selected[['구분', '겨울기온', '가뭄안전성', '침수안정성', '평균풍속', '일조시간', '최대적설']])
+        print(gw_selected[['구분', '겨울기온', '가뭄안전성', '침수안정성', '평균풍속', '일조시간']])
 
         
     

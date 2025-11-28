@@ -2,7 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-import matplotlib.font_manager as fm
 
 plt.rcParams['font.family'] ='Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] =False
@@ -13,19 +12,14 @@ def preprocessing_weather(df, feature='', season='연간'):
     # 계절 분류
     if season == '여름':
         target_months = [6, 7, 8]
-        prefix = '여름_'
     elif season == '겨울':
         target_months = [12, 1, 2]
-        prefix = '겨울_'
     elif season == '봄':
         target_months = [3, 4, 5]
-        prefix = '봄_'
     elif season == '가을':
         target_months = [9, 10, 11]
-        prefix = '가을_'
     else:
         target_months = list(range(1, 13))
-        prefix = '연_'
     
     
     df_seasonal = df[df['월'].isin(target_months)].copy()
@@ -35,8 +29,7 @@ def preprocessing_weather(df, feature='', season='연간'):
         '평균기온(°C)': 'mean',
         '최저기온(°C)': 'mean',
         '평균풍속(m/s)': 'mean',
-        '합계 일조시간(hr)': 'mean',
-        '최심적설(cm)': 'max'
+        '합계 일조시간(hr)': 'mean'
     }).reset_index()
 
     # feature가 빈 문자열인지 판단
@@ -50,13 +43,12 @@ def preprocessing_weather(df, feature='', season='연간'):
             '평균기온(°C)': 'mean',
             '최저기온(°C)': 'mean',
             '평균풍속(m/s)': 'mean',
-            '합계 일조시간(hr)': 'sum',
-            '최심적설(cm)': 'max'
+            '합계 일조시간(hr)': 'sum'
         }).reset_index()
 
         df_result.columns = [
             '연도', '시도', '연강수량', '연평균기온',
-            '연최저기온', '연평균풍속', '연일조시간', '최대적설'
+            '연최저기온', '연평균풍속', '연일조시간'
         ]
         target_col = None
 
@@ -70,8 +62,6 @@ def preprocessing_weather(df, feature='', season='연간'):
             op = 'mean'; col_name = '평균풍속(m/s)'
         elif feature == '일조시간':
             op = 'sum'; col_name = '합계 일조시간(hr)'
-        elif feature == '적설량':
-            op = 'max'; col_name = '최심적설(cm)'
         elif feature == '최저기온':
             op = 'mean'; col_name = '최저기온(°C)'
         
@@ -80,7 +70,7 @@ def preprocessing_weather(df, feature='', season='연간'):
         }).reset_index()
         
         
-        target_col = f'{prefix}{feature}'
+        target_col = f'{season}_{feature}'
         df_result = df_result.rename(columns={col_name: target_col})
 
     # 해당 인자로 전처리 된 csv, 해당 feature, feature 빈 문자열 판단 
@@ -98,8 +88,7 @@ def visualization(df, feature, season, target_col, is_default_mode):
             ('연평균기온', f'[{season}] 평균 기온 (°C)'),
             ('연최저기온', f'[{season}] 최저 기온 (°C)'),
             ('연평균풍속', f'[{season}] 평균 풍속 (m/s)'),
-            ('연일조시간', f'[{season}] 총 일조시간 (hr)'),
-            ('최대적설', f'[{season}] 최대 적설심 (cm)')
+            ('연일조시간', f'[{season}] 총 일조시간 (hr)')
         ]
 
         for i, (col, title) in enumerate(metrics):
@@ -109,8 +98,9 @@ def visualization(df, feature, season, target_col, is_default_mode):
                          palette=colors, markers=True, linewidth=2.5, ax=ax)
             ax.set_title(title, fontsize=14, fontweight='bold')
             ax.grid(True, alpha=0.3)
+        # 마지막 빈 그래프 제거
+        axes[2, 1].axis('off')
         
-
     # feature 문자열이 빈 문자열이 아닐 때
     else:
         plt.figure(figsize=(12, 6))
@@ -133,9 +123,9 @@ if __name__ == "__main__":
     file_name = 'merged_weather_spi.csv'
     
     # 원하는 계절 입력하면 해당 계절만 보여줌 4계절이 아니라면 연 단위로 보여줌
-    season = ''
+    season = '겨울'
 
-    # 옵션은 강수량, 평균기온, 최저기온, 평균풍속, 일조시간, 적설량만 입력가능
+    # 옵션은 강수량, 평균기온, 최저기온, 평균풍속, 일조시간만 입력가능
     # 빈문자열이면 5개 모두 출력함
     feature = ''     
     

@@ -90,7 +90,7 @@ def merge_spi_weather(spi, weather_file):
     merge['시도'] = merge['지점명'].map(REGION_MAPPING)
     merge = merge[merge['시도'].notnull()].copy()
 
-    fill_zero_cols = ['월합강수량(00~24h만)(mm)', '최심적설(cm)', '합계 일조시간(hr)']
+    fill_zero_cols = ['월합강수량(00~24h만)(mm)', '합계 일조시간(hr)']
     for col in fill_zero_cols:
         if col in merge.columns:
             merge[col] = merge[col].fillna(0)
