@@ -127,6 +127,33 @@ def topic_modeling(counter: Counter, tokens_list: list, file_no_json: str):
             top_word_indices = H[topic_idx].argsort()[::-1][:10]
             top_words = [vocab[idx] for idx in top_word_indices]
             f.write(f"Topic #{topic_idx}: {', '.join(top_words)}\n")
+            
+            # 토픽모델링 워드클라우드 시각화 코드입니다!
+            # 50개 키워드를 표시합니다
+            num_top_words = 50
+            top_word_indices = H[topic_idx].argsort()[::-1][:num_top_words]
+
+            word_weights = {
+                vocab[word_idx]: H[topic_idx, word_idx] for word_idx in top_word_indices
+            }
+
+            wc = WordCloud(
+                font_path="/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+                prefer_horizontal=1.0,
+                background_color="white",
+                margin=1,
+                mask= mask_arr,
+            )
+            wc.generate_from_frequencies(word_weights)
+
+            plt.figure(figsize=(10, 10))
+            plt.imshow(wc)
+            plt.axis("off")
+            plt.title(f"Topic #{topic_idx}")
+
+            file_png_in = f"{file_png}#{topic_idx}.png"
+            topic_png_path = os.path.join(save_topic_dir, file_png_in)
+            plt.savefig(topic_png_path)
 
 
 def keyword_separation(file: str):
