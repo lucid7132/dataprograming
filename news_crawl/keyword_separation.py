@@ -12,8 +12,12 @@ from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfTransformer
 from scipy.sparse import dok_matrix
 import numpy as np
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+from PIL import Image
 import pandas as pd
-# from keywords_change_by_year import keywords_change_by_year 추후 # 제거후 적용할것 266줄도 
+
+from keywords_change_by_year import keywords_change_by_year
 
 # 크롤링한 뉴스 json파일을 분석합니다 
 # 뉴스 전처리 -> 키워드 분석 -> 토픽 모델링 
@@ -26,6 +30,7 @@ plt.rc('font', family='Malgun Gothic')
 dir_path = "news_crawl/crawl_result"
 all_json = os.listdir(dir_path)
 
+# 중요키워드 수정시 여기를 바꿔주세요 
 import_keywords = ['정책', '교육','농사', '스마트', '인구', '주택']
 years =[]
 imkeys_dict = {}
@@ -127,6 +132,7 @@ def topic_modeling(counter: Counter, tokens_list: list, file_no_json: str):
             top_word_indices = H[topic_idx].argsort()[::-1][:10]
             top_words = [vocab[idx] for idx in top_word_indices]
             f.write(f"Topic #{topic_idx}: {', '.join(top_words)}\n")
+
             
             # 토픽모델링 워드클라우드 시각화 코드입니다!
             # 50개 키워드를 표시합니다
@@ -216,11 +222,11 @@ def keyword_separation(file: str):
         print(f"{e} : 데이터 프레임용 데이터 생성중 오류 ")
         # 위 오류는 귀농 주요키워드 변화를 알기위해 작성한 코드에서 나온 오류입니다.
         # 단일파일이나 다른 주제로 크롤링을 할시 나타나면 무시하셔도 좋습니다. 
-    # 예시 : {'2020': [6097, 13461, 3412, 2397, 3704, 6013, 3704]} 
+    # {'2020': [6097, 13461, 3412, 2397, 3704, 6013, 3704]} 
 
     # 토픽 모델링, 행렬을 토픽갯수로 나누어 표현 
     # 토픽 모델링 건너뛰려면 아래코드를 주석처리 해주세요
-    topic_modeling(counter, tokens_list, file_no_json)
+    #topic_modeling(counter, tokens_list, file_no_json)
     print(f"{file} : 토픽 모델링 완료")
 
     
@@ -257,9 +263,9 @@ if __name__ == "__main__":
         imkeys_df = pd.DataFrame(imkeys_dict, index=import_keywords, columns=years)
         imkeys_df.to_csv('news_crawl/keywords_change_by_year/keywords_change_by_year.csv')
         print("연도별 키워드 추이 분석용 csv파일 생성완료")
-        # keywords_change_by_year(imkeys_df) 추후 # 제거후 적용할것 
+        keywords_change_by_year(imkeys_df)
     except Exception as e:
         print(f"{e} : 데이터 프레임 생성중 오류 ")
         print("import_keywords 데이터프레임으로 만들기 실패 ")
-        # 위 오류는 귀농 주요키워드 변화를 알기위해 작성한 코드에서 나온 오류입니다.
-        # 단일파일이나 다른 주제로 크롤링을 할시 나타나면 무시하셔도 좋습니다. 
+        print("위 오류는 귀농 주요키워드 변화를 알기위해 작성한 코드에서 나온 오류입니다.")
+        print("단일파일이나 다른 주제로 크롤링을 할시 나타나면 무시하셔도 좋습니다.")
