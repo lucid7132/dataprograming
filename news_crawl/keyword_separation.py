@@ -17,12 +17,18 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import pandas as pd
 
+# 연도별 키워드 추이 분석 import
 from keywords_change_by_year import keywords_change_by_year
+
+# 감성 분석을 위한 추가 import
+from analyze_sentiment import initialize_sentiment_model
+from analyze_sentiment import sentiment_analysis
 
 # 크롤링한 뉴스 json파일을 분석합니다 
 # 뉴스 전처리 -> 키워드 분석 -> 토픽 모델링 
 # 결과: keyword_result/{filename}.txt 파일 - 토픽모델링 결과값
 # 결과: keyword_result/{filename}.png 파일 - 키워드분석 막대그래프 시각화 
+# 결과: sentiment_result/{filename}_sentiment.json 파일 - 감성 분석 결과
 
 # 막대그래프 폰트 (깨져서 설정)
 plt.rc('font', family='Malgun Gothic')
@@ -31,7 +37,9 @@ dir_path = "news_crawl/crawl_result"
 all_json = os.listdir(dir_path)
 
 # 중요키워드 수정시 여기를 바꿔주세요 
-import_keywords = ['정책', '교육','농사', '스마트', '인구', '주택']
+# 중요키워드 샘플 ['강원', '경남', '경북', '전남']
+# 중요키워드 샘플 ['정책', '교육','농사', '스마트', '인구', '주택'] 
+import_keywords = ['정책', '교육','농사', '스마트', '인구', '주택'] 
 years =[]
 imkeys_dict = {}
 
@@ -176,6 +184,8 @@ def keyword_separation(file: str):
     news_data = news_preprocessing(news_data)
     print(f"{file} : 뉴스 전처리 완료")
 
+    # 감성 모델로 긍정/부정 분석 
+    sentiment_analysis(news_data, file_no_json)
     
     kiwi = Kiwi()
     counter = Counter()
@@ -251,6 +261,11 @@ def keyword_separation(file: str):
     return 0;
 
 if __name__ == "__main__":
+
+    # 감성 분석 모델 초기화
+    model_loaded = initialize_sentiment_model()
+    if not model_loaded:
+        print("키워드 기반 간단한 감성 분석을 사용합니다.")
 
     # 크롤링 결과 폴더 crawl_result 내의 모든 json 파일을 분석
     for file in all_json:

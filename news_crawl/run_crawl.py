@@ -21,19 +21,12 @@ from typing import List, Dict
         "query": "축제",
         "filename": "festival"
 }
-    {
-        
-    }
-    {
-        "query": "귀농경상북도",
-        "filename": "farming_gybok"
-    }
 '''
 
 configs = [
     {
-        "query": "귀농전라남도",
-        "filename": "farming_jnam"
+        "query": "귀농경상북도",
+        "filename": "farming_gybok"
     }
 ]
 
