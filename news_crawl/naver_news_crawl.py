@@ -18,7 +18,7 @@ from tqdm import tqdm
 # json 파일 내 title, text로 분리 
 
 argparser = ArgumentParser("네이버 뉴스 크롤링")
-argparser.add_argument("--query", type=str, default="귀농")
+argparser.add_argument("--query", type=str, default="귀농강원")
 argparser.add_argument("--start-date", type=str, default="2025.11.17")
 argparser.add_argument("--end-date", type=str, default="2025.11.17")
 argparser.add_argument("--output-path", type=str, default="news_crawl/crawl_news.json")
@@ -102,14 +102,10 @@ def crawl_news(args: Namespace) -> List[Dict[str, str]]:
                     r_data = response.json()
                 except json.JSONDecodeError as e:
                     print(f"JSON 파싱 오류 : {e}")
+                    break
                 
                 # 빈 url 이면 collection이 공백(None)
                 if "collection" not in r_data or r_data["collection"] is None: 
-                    break
-
-                next_url = r_data["url"]
-                if next_url == "":
-                    print("마지막 페이지 도달")
                     break
                 
                 script_source = r_data["collection"][0]["script"]
@@ -128,6 +124,11 @@ def crawl_news(args: Namespace) -> List[Dict[str, str]]:
 
                 progress_bar.set_postfix({"date": date, "num_Article":len(news_data)})
                 sleep(args.sleep_time)
+
+                next_url = r_data["url"]
+                if next_url == "":
+                    print("마지막 페이지 도달")
+                    break
 
             progress_bar.update(1)
 

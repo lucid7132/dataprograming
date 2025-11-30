@@ -21,12 +21,19 @@ from typing import List, Dict
         "query": "축제",
         "filename": "festival"
 }
+    {
+        
+    }
+    {
+        "query": "귀농경상북도",
+        "filename": "farming_gybok"
+    }
 '''
 
 configs = [
     {
-        "query": "귀농",
-        "filename": "farming"
+        "query": "귀농전라남도",
+        "filename": "farming_jnam"
     }
 ]
 
@@ -35,8 +42,8 @@ def run_crawl(year:int , config:List[Dict]):
     save_dir = "news_crawl/crawl_result"
     os.makedirs(save_dir, exist_ok=True)
 
-    start_date = f"{year}0101"
-    end_date = f"{year}1230"
+    start_date = f"{year}.01.01"
+    end_date = f"{year}.12.30"
     output_path = f"{config["filename"]}_{year}.json"
 
     print(f"{config['query']}_{year} 크롤링 시작")
