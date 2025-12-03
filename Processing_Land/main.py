@@ -35,7 +35,6 @@ def create_latest_csv():
 제 주,124030,549"""
     
     file_name = "2025_Q2_Latest_Price.csv"
-    # 파일이 없으면 생성
     if not os.path.exists(file_name):
         with open(file_name, "w", encoding="utf-8") as f:
             f.write(csv_content)
