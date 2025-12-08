@@ -4,13 +4,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-# 한글 폰트 설정
 plt.rc('font', family='Malgun Gothic') 
 plt.rc('axes', unicode_minus=False)
 
-# ==========================================
-# 1. 데이터 로드 및 전처리 함수
-# ==========================================
+# 데이터 로드
 def clean_kosis_csv(file_path, category_name):
     try:
         df = pd.read_csv(file_path, header=[0, 1], encoding='utf-8')
@@ -51,9 +48,7 @@ def clean_kosis_csv(file_path, category_name):
             })
     return pd.DataFrame(processed_data)
 
-# ==========================================
-# 2. 파일 로드 및 통합
-# ==========================================
+# 파일 로드 및 통합
 data_dir = 'data'
 
 files = {
@@ -67,7 +62,6 @@ files = {
 
 price_file = 'mix_price.csv'
 
-print("데이터 로드 및 처리 중...")
 all_crops_df = pd.DataFrame()
 
 for cat, path in files.items():
@@ -94,23 +88,19 @@ if not all_crops_df.empty:
     master_df.fillna(0, inplace=True)
 else:
     master_df = pd.DataFrame()
-    print("생산량 데이터가 비어있습니다.")
+    print("생산량 데이터가 없음.")
 
-# ==========================================
-# 3. 가격 데이터 반영 및 시각화
-# ==========================================
-
+# 가격 데이터 시각화
 if os.path.exists(price_file) and not master_df.empty:
-    print("\n--- 가격 데이터 로드 및 병합 ---")
+    print("\n가격 데이터 로드")
     price_df = pd.read_csv(price_file)
     if 'DATE' in price_df.columns:
         price_df.rename(columns={'DATE': 'Year'}, inplace=True)
     
-    # 가격 데이터는 2024년까지만 사용 (분석 기준 통일)
+    # 가격 데이터는 2024년까지만 사용 
     price_df = price_df[price_df['Year'] <= 2024]
     master_df = pd.merge(master_df, price_df, on='Year', how='left')
     
-    # 마늘의 prod_keyword를 '깐마늘' -> '마늘'로 변경
     target_crops_mapping = {
         '강원_고랭지배추': {'prod_keyword': '배추', 'price_col': '배추'},
         '강원_고랭지무': {'prod_keyword': '무', 'price_col': '무'},
@@ -121,7 +111,7 @@ if os.path.exists(price_file) and not master_df.empty:
     
     plot_data = {} 
     
-    print("\n--- 연도별 실제 가격 반영 매출액 계산 ---")
+    print("\n연도별 실제 가격 반영 매출액 계산")
     for label, info in target_crops_mapping.items():
         prod_keyword = info['prod_keyword']
         price_col = info['price_col']
@@ -139,19 +129,14 @@ if os.path.exists(price_file) and not master_df.empty:
                 'production': col_name,
                 'revenue': revenue_col
             }
-            print(f"[계산 완료] {label}: 생산량({col_name}) * 가격({price_col})")
-        else:
-            print(f"[스킵] {label}: 생산량 컬럼({prod_keyword} 포함) 또는 가격 컬럼({price_col})을 찾을 수 없음")
 
-    # -------------------------------------------------------
-    # 그래프 그리기 (1행 3열)
-    # -------------------------------------------------------
+    # 그래프
     if plot_data and 'Households' in master_df.columns:
         fig, axes = plt.subplots(1, 3, figsize=(24, 8))
         
         colors = sns.color_palette("husl", len(plot_data))
         
-        # 공통: 지역 필터링 함수
+        # 공통: 지역 필터링
         def get_plot_df(df, label):
             region_filter = label.split('_')[0]
             region_name = None
@@ -162,7 +147,7 @@ if os.path.exists(price_file) and not master_df.empty:
                 return df[df['Region'] == region_name]
             return df
 
-        # --- [1열] 10a당 생산량 그래프 (수정: 2024년까지만 필터링) ---
+        # [1열] 10a당 생산량 그래프
         for i, (label, cols) in enumerate(plot_data.items()):
             prod_col = cols['production']
             # 값 존재 여부(>0) 확인 및 2024년 이하 데이터만 필터링
@@ -180,7 +165,7 @@ if os.path.exists(price_file) and not master_df.empty:
         axes[0].grid(True, linestyle='--', alpha=0.6)
         axes[0].legend(title='작물', fontsize=10)
 
-        # --- [2열] 예상 매출액 그래프 ---
+        # [2열] 예상 매출액 그래프
         for i, (label, cols) in enumerate(plot_data.items()):
             rev_col = cols['revenue']
             temp_df = master_df[master_df[rev_col] > 0]
@@ -196,7 +181,7 @@ if os.path.exists(price_file) and not master_df.empty:
         axes[1].grid(True, linestyle='--', alpha=0.6)
         axes[1].legend(title='작물', fontsize=10)
 
-        # --- [3열] 귀농 가구 수 그래프 ---
+        #[3열] 귀농 가구 수 그래프
         household_plot_df = master_df[master_df['Year'] <= 2024]
         sns.lineplot(data=household_plot_df, x='Year', y='Households', hue='Region', 
                      marker='o', linewidth=2.5, errorbar=None, ax=axes[2])
@@ -206,10 +191,9 @@ if os.path.exists(price_file) and not master_df.empty:
 
         plt.tight_layout()
         
-        # [추가] 최종 그래프 저장
+        #저장
         save_path = 'result.png'
-        plt.savefig(save_path, dpi=300) # 고해상도 저장
-        print(f"그래프가 '{save_path}'로 저장되었습니다.")
+        plt.savefig(save_path, dpi=300)
         
         plt.show()
 
