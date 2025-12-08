@@ -115,7 +115,7 @@ def topic_modeling(counter: Counter, tokens_list: list, file_no_json: str):
     tfidf_matrix = tfidf.fit_transform(dtm)
 
     # 추려낼 토픽 갯수 
-    num_topics = 10
+    num_topics = 6
     nmf = NMF(n_components=num_topics, max_iter=1000, shuffle=True, random_state=42)
 
     W = nmf.fit_transform(tfidf_matrix)
@@ -195,7 +195,8 @@ def keyword_separation(file: str):
     stopwords = Stopwords()
     s_words = {('귀농', 'NNG'), ('이번', 'NNG'), ('기자', 'NNG'), ('만들', 'VV'), ('가능', 'NNG'),
                 ('마련', 'NNG'), ('지나', 'VV'), ('밝히', 'VV'), ('보이', 'VV'), ('이어지', 'VV'), 
-                ('열리', 'VV'), ('오전', 'NNG'), ('오후', 'NNG')}
+                ('열리', 'VV'), ('오전', 'NNG'), ('오후', 'NNG'),
+                ('ha', 'SL'), ('kg', 'SL'), ('오르', 'VV'), ('무르', 'VA'), ('mm', 'SL'), ('m', 'SL')}
     stopwords.add(s_words)
 
     # mininterval 업데이트 간격 
@@ -208,8 +209,10 @@ def keyword_separation(file: str):
         for token in kiwi.tokenize(news, normalize_coda=True, stopwords=stopwords):
             if token.tag in tags and len(token.form) > 1:
                 tokens.append(token.form) # 토큰 태그 찾기 (token.form, token.tag) 튜플로 확인 
-        
-
+            # 스탑워드의 토큰찾는 용도입니다 
+            '''if token.form == "mm":
+                    print(token.form, token.tag)'''
+   
         if len(tokens) >= 10:
             tokens_list.append(tokens)
             counter.update(tokens)
@@ -236,7 +239,7 @@ def keyword_separation(file: str):
 
     # 토픽 모델링, 행렬을 토픽갯수로 나누어 표현 
     # 토픽 모델링 건너뛰려면 아래코드를 주석처리 해주세요
-    #topic_modeling(counter, tokens_list, file_no_json)
+    topic_modeling(counter, tokens_list, file_no_json)
     print(f"{file} : 토픽 모델링 완료")
 
     

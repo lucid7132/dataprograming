@@ -4,15 +4,12 @@ import os
 import numpy as np
 import re
 
-# ==========================================
-# 0. 기본 설정 (폰트 등)
-# ==========================================
+
+# 0. 기본 설정
 plt.rcParams['font.family'] = 'Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] = False
 
-# ==========================================
 # 1. 유틸리티 및 데이터 생성 함수
-# ==========================================
 def check_file_exists(file_path):
     if not os.path.exists(file_path):
         print(f"   [Warning] 파일이 존재하지 않습니다: {file_path}")
@@ -40,9 +37,7 @@ def create_latest_csv():
             f.write(csv_content)
     return file_name
 
-# ==========================================
-# 2. 데이터 로드 함수들 (Table 생성용)
-# ==========================================
+# 2. 데이터 로드 함수들
 def get_latest_data(file_path):
     if not check_file_exists(file_path):
         return pd.DataFrame(columns=['Province', 'BasePrice', 'Total_Volume'])
@@ -120,9 +115,7 @@ def get_area_data(file_path):
     except:
         return pd.DataFrame()
 
-# ==========================================
-# 3. [핵심 시각화] 도 단위 지가변동률 추세 (필터링 + 색상 강조)
-# ==========================================
+# 3. 도 단위 지가 변동률
 def draw_fluctuation_trend_clean(file_path):
     print("\n" + "="*60)
     print("[시각화] 최근 1년 지가 변동률 추세 (도 단위 통합)")
@@ -194,7 +187,7 @@ def draw_fluctuation_trend_clean(file_path):
             df[col] = pd.to_numeric(df[col], errors='coerce')
         
         trend_df = df.groupby('Province')[target_cols].mean()
-        print(f" -> 그래프 표시 지역: {', '.join(trend_df.index)}")
+        print(f" -> 그래프 표시 지역 : {', '.join(trend_df.index)}")
 
         # 3. 그래프 그리기
         plt.figure(figsize=(14, 8))
@@ -209,13 +202,13 @@ def draw_fluctuation_trend_clean(file_path):
         
         compare_group = ['경상북도', '전라남도', '경상남도']
 
-        # (1) 배경 (그 외 지역) - 진한 회색(#999999), 맨 뒤(zorder=1)
+        # (1) 배경 (그 외 지역) - 진한 회색
         for province in trend_df.index:
             if "강원" in province: continue
             if province in compare_group: continue
             plt.plot(x_labels, trend_df.loc[province], color='#999999', alpha=0.7, linewidth=1.5, zorder=1)
 
-        # (2) 비교군 (파란색) - 중간(zorder=2)
+        # (2) 비교군 - 파란색
         for province in trend_df.index:
             if province in compare_group:
                 y_vals = trend_df.loc[province]
@@ -223,7 +216,7 @@ def draw_fluctuation_trend_clean(file_path):
                 plt.text(len(x_labels)-1, y_vals.iloc[-1], province, 
                          color='royalblue', fontsize=9, fontweight='bold', ha='left', va='center')
 
-        # (3) 주인공 (강원도) - 빨간색, 맨 앞(zorder=10)
+        # (3) 강원도 - 빨간색, 맨 앞
         if any("강원" in idx for idx in trend_df.index):
             gw_idx = [idx for idx in trend_df.index if "강원" in idx][0]
             gw_values = trend_df.loc[gw_idx]
@@ -241,18 +234,16 @@ def draw_fluctuation_trend_clean(file_path):
         plt.show()
 
     except Exception as e:
-        print(f" [Error] 추세 그래프 오류: {e}")
+        print(f" 그래프 오류 : {e}")
 
-# ==========================================
-# 4. 메인 실행부
-# ==========================================
+# 4. 메인
 def main():
-    # 1. 파일 설정 (csvcreating 없이 직접 생성 및 로드)
+    # 1. 파일 설정
     f_latest = create_latest_csv() 
     f_fluctuation = "시군구별용도지역별이용상황별 지가변동률.csv"
     f_area = "시군별_논밭별_경지면적_20251107103537.csv"
 
-    # 2. 데이터 로드 및 병합 (표 생성용)
+    # 2. 표 생성
     df_latest = get_latest_data(f_latest)
     df_f = get_fluctuation_data(f_fluctuation)
     df_a = get_area_data(f_area)
@@ -301,3 +292,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
