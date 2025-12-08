@@ -70,4 +70,4 @@ if results:
     final_df.to_csv(output_file, float_format='%.1f')
     print(f"\n완료 '{output_file}'")
 else:
-    print("\n처리된 데이터가 없습니다. 'data/nongnet' 폴더 안에 파일이 있는지 확인해주세요.")
+    print("\n처리된 데이터가 없음")
