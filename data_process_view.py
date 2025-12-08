@@ -5,37 +5,30 @@ import matplotlib.font_manager as fm
 import numpy as np
 import os
 
-# =========================================================
-# [0] 분석 환경 및 범위 설정 (여기서 연도를 수정하세요)
-# =========================================================
+
 START_YEAR = 2015   # 시작 연도
 END_YEAR = 2024    # 종료 연도 (예측 포함 시 2025, 실측만 볼 경우 2024)
 
-INPUT_FILENAME = "final_dataset_for_ai.csv"
+INPUT_FILENAME = "final_dataset.csv"
 
-# =========================================================
-# [1] 스타일 및 한글 폰트 설정
-# =========================================================
+
 plt.style.use('seaborn-v0_8-white')
 
-# 폰트 설정 (Windows: 맑은 고딕)
 font_path = 'C:/Windows/Fonts/malgun.ttf'
 try:
     font_name = fm.FontProperties(fname=font_path).get_name()
     plt.rc('font', family=font_name)
     plt.rc('axes', unicode_minus=False)
-    print(f"✅ 폰트 설정 완료: {font_name}")
+    print(f"폰트 설정 완료: {font_name}")
 except:
-    print("⚠️ 폰트 설정 실패. 기본 폰트로 진행합니다.")
+    print("폰트 설정 실패. 기본 폰트로 진행합니다.")
 
-# =========================================================
-# [2] 데이터 로드 및 연도 필터링
-# =========================================================
+
 if os.path.exists(INPUT_FILENAME):
-    print(f"📂 '{INPUT_FILENAME}' 파일을 불러옵니다.")
+    print(f"'{INPUT_FILENAME}' 파일을 불러옵니다.")
     df = pd.read_csv(INPUT_FILENAME)
 else:
-    print(f"⚠️ 파일이 없어 테스트 데이터를 생성합니다.")
+    print(f"파일이 없어 테스트 데이터를 생성합니다.")
     # 테스트 데이터 생성 시에도 설정한 연도 범위 사용
     years = np.arange(START_YEAR, END_YEAR + 1)
     regions = ['강원도', '경상남도', '경상북도', '전라남도']
@@ -54,14 +47,12 @@ else:
             })
     df = pd.DataFrame(data_list)
 
-# [중요] 설정한 연도 범위로 데이터 필터링
+# 설정한 연도 범위로 데이터 필터링
 df = df[(df['연도'] >= START_YEAR) & (df['연도'] <= END_YEAR)]
 
-print(f"📅 데이터 분석 기간: {START_YEAR}년 ~ {END_YEAR}년")
+print(f"데이터 분석 기간: {START_YEAR}년 ~ {END_YEAR}년")
 
-# =========================================================
-# [3] 시각화 설정 (3행 4열 구조)
-# =========================================================
+
 target_regions = ['강원도', '경상남도', '경상북도', '전라남도']
 variables = [
     ('평균지가', '평균 지가 (원/㎡)', '#D32F2F'),  # 빨강
@@ -69,25 +60,23 @@ variables = [
     ('강수량', '강수량 (mm)', '#1976D2')            # 파랑
 ]
 
-# 전체 캔버스 크기 설정 (가로 24인치, 세로 16인치)
+# 전체 캔버스 크기 설정
 fig, axes = plt.subplots(3, 4, figsize=(24, 16))
 
-# =========================================================
-# [4] 루프를 돌며 그래프 그리기
-# =========================================================
+
 def draw_subplot(ax, df_sub, x_col, y1_col, y2_col, y2_label, color, is_first_col):
-    """ 개별 서브플롯 그리기 함수 """
+
     # 1. 막대 그래프 (귀농 인구)
     sns.barplot(x=x_col, y=y1_col, data=df_sub, ax=ax, color='lightgray', alpha=0.6, zorder=1)
     
-    if is_first_col: # 맨 왼쪽 열에만 y축 라벨 표시 (공간 절약)
+    if is_first_col: # 맨 왼쪽 열에만 y축 라벨 표시 
         ax.set_ylabel('귀농 인구수 (명)', fontsize=11, fontweight='bold', color='gray')
     else:
-        ax.set_ylabel('') # 나머지는 라벨 숨김
+        ax.set_ylabel('') 
         
     ax.set_ylim(0, df_sub[y1_col].max() * 1.3)
     ax.grid(False)
-    ax.set_xlabel('') # x축 라벨(연도)은 공간상 생략하거나 맨 아래만 표시
+    ax.set_xlabel('') # x축 라벨(연도)은 공간상 생략 또는 맨 아래만 표시
 
     # 2. 꺾은선 그래프 (환경 변수)
     ax2 = ax.twinx()
@@ -100,29 +89,26 @@ def draw_subplot(ax, df_sub, x_col, y1_col, y2_col, y2_label, color, is_first_co
 
     return ax2 # 범례 처리를 위해 반환
 
-# --- 이중 반복문 (행: 변수 / 열: 지역) ---
+
 for col_idx, region in enumerate(target_regions):
     # 해당 지역 데이터 필터링 및 연도별 평균 집계
     region_df = df[df['지역'] == region].copy()
     region_trend = region_df.groupby('연도')[['귀농인구수', '평균지가', '평균기온', '강수량']].mean().reset_index()
 
     for row_idx, (var_col, var_label, color) in enumerate(variables):
-        ax = axes[row_idx, col_idx] # 현재 그릴 위치
-        
-        # 그래프 그리기
+        ax = axes[row_idx, col_idx]
+
         draw_subplot(ax, region_trend, '연도', '귀농인구수', var_col, var_label, color, col_idx == 0)
         
-        # 맨 윗줄에만 지역 이름(제목) 표시
+
         if row_idx == 0:
             ax.set_title(region, fontsize=18, fontweight='bold', pad=20, backgroundcolor='#f0f0f0')
 
 plt.tight_layout()
 
-# =========================================================
-# [5] 저장 및 출력
-# =========================================================
-save_filename = "all_regions_analysis_dashboard.png"
-plt.savefig(save_filename, dpi=200, bbox_inches='tight') # 용량이 크므로 dpi 200 적절
 
-print(f"\n💾 4개 지역 통합 분석 결과가 '{save_filename}'에 저장되었습니다.")
+save_filename = "all_regions_analysis_dashboard.png"
+plt.savefig(save_filename, dpi=200, bbox_inches='tight')
+
+print(f"\n 4개 지역 통합 분석 결과가 '{save_filename}'에 저장되었습니다.")
 plt.show()
