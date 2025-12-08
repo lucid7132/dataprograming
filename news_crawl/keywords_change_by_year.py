@@ -35,7 +35,7 @@ if __name__ == "__main__":
         '2022': [7000, 11000, 3700, 3000, 8000, 4000],
         '2023': [9000, 10000, 4000, 4000, 10000, 6000]
             }
-    index_labels = ['정책', '교육', '농사', '스마트',  '인구', '주택']
+    index_labels = ['정책', '교육', '농사', '스마트',  '인구', '토지']
     df = pd.DataFrame(data, index=index_labels) 
 
     df1 = pd.read_csv("news_crawl/keywords_change_by_year/keywords_change_by_year.csv")
